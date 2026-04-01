@@ -1,0 +1,451 @@
+{
+  "name": "RAG",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "insert",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "={{ $('Download file').item.json.name }}",
+          "mode": "id"
+        },
+        "embeddingBatchSize": 30,
+        "options": {}
+      },
+      "id": "97d84336-e5a1-4d27-8aa9-8c690a774f65",
+      "name": "Insert into Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "position": [
+        3200,
+        368
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "qdrantApi": {
+          "id": "BAhW64sZiCphSmiL",
+          "name": "Qdrant account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.text }}",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "id": "e52e7eb5-1a50-446e-8f62-a1f5586bf4a3",
+      "name": "Load File Content & Metadata",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "position": [
+        3168,
+        592
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "ecdd2d91-dbac-4c24-ae1a-f67e23fe7ed2",
+      "name": "Split into Chunks",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "position": [
+        3264,
+        704
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are a precise, reliable document-based assistant. Your ONLY purpose is to answer questions using information from the provided document knowledge base.\n\nCRITICAL RULES (follow them strictly, in this exact order):\n\n1. ALWAYS use the document search / retrieval tool FIRST for ANY question that could possibly relate to the documents — even if the question seems general or you think you know the answer.\n\n2. Answer EXCLUSIVELY based on the information retrieved from the documents. \n   - NEVER use your general pre-trained knowledge.\n   - NEVER invent, assume, or add any information not explicitly present in the retrieved context.\n\n3. If the retrieved documents do not contain enough information to answer the question accurately:\n   - Respond exactly: \"I searched the available documents but could not find this specific information.\"\n\n4. When the documents contain relevant information:\n   - Provide a clear and concise direct answer first.\n   - Support every factual claim (dates, numbers, names, procedures, requirements etc.) with a short direct quote from the document.\n   - Format quotes like this: \"According to the document: '[exact short quote]'\"\n   - Always cite the source at the end of the relevant sentence or paragraph in the format:  \n     **Source:** [Document name or title, if available]\n\n5. Keep quotes concise — only the part that directly verifies the fact.\n6. If multiple documents contain relevant information, mention and cite all of them.\n7. Use bullet points or numbered lists when it improves clarity (for lists of requirements, steps, etc.).\n8. If the user's question is unclear or too broad, ask for clarification before searching.\n\nTone: Professional, neutral, helpful and precise. Never be overly friendly or add unnecessary explanations.\n\nRemember: Your credibility depends on never hallucinating. It is always better to say \"information not found in the documents\" than to guess or add external knowledge."
+        }
+      },
+      "id": "70a167d6-f1ee-491c-afed-da4ba1d6f16c",
+      "name": "Answer Questions",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        2224,
+        352
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "This tool searches the document knowledge base. Use it to retrieve specific information, facts, quotes, or details that are stored in the uploaded documents. This tool retrieves relevant content when answering questions that require specific facts or details from uploaded documents. The information is retrieved based on semantic similarity to your query.",
+        "qdrantCollection": {
+          "__rl": true,
+          "value": "Тестовое задание ИИ.pdf",
+          "mode": "list",
+          "cachedResultName": "Тестовое задание ИИ.pdf"
+        },
+        "topK": 10,
+        "options": {}
+      },
+      "id": "5a43b619-64d5-4175-b198-a8699ce3ba89",
+      "name": "Search Documents",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
+      "position": [
+        2416,
+        528
+      ],
+      "typeVersion": 1.3,
+      "credentials": {
+        "qdrantApi": {
+          "id": "BAhW64sZiCphSmiL",
+          "name": "Qdrant account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "contextWindowLength": 20
+      },
+      "id": "15d06ecd-8c45-4c61-acbe-52f9d1bf9410",
+      "name": "Store Conversation",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        2288,
+        528
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "model": "=qwen/qwen3-embedding-8b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2640,
+        736
+      ],
+      "id": "9def4e80-be37-42e7-96b4-b320b9f8fe1a",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "k24VIJkzHx1jCDAu",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "10xTtjvhpacjJLG4hD6sPpK-7-ql73QOr",
+          "mode": "list",
+          "cachedResultName": "Тестовое задание ИИ.pdf",
+          "cachedResultUrl": "https://drive.google.com/file/d/10xTtjvhpacjJLG4hD6sPpK-7-ql73QOr/view?usp=drivesdk"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2864,
+        368
+      ],
+      "id": "bb86b4b9-1b96-41a7-a565-aa4a805104fb",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "wacr1NxpD6Fk1Ht3",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        3024,
+        368
+      ],
+      "id": "576ee915-7d76-46d4-a016-9b757d28265c",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "model": "minimax/minimax-m2.5",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        2080,
+        608
+      ],
+      "id": "e2b2b3b2-c3c9-4271-b788-d5bdcc5d0fad",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "8auvoWtXckFfWTtW",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1tsN23D2NfmIij8bEcrsVljZVjwCl5PJD",
+          "mode": "list",
+          "cachedResultName": "llm",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1tsN23D2NfmIij8bEcrsVljZVjwCl5PJD"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        2704,
+        368
+      ],
+      "id": "e37707d8-fb19-4bf5-80c4-b2691c1c3f76",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "wacr1NxpD6Fk1Ht3",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b7870ac9-62aa-45aa-9088-9c4023cbce68",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        2784,
+        224
+      ],
+      "id": "784e5607-c57d-46e3-aa96-361fe100dcf0",
+      "name": "Webhook",
+      "webhookId": "b7870ac9-62aa-45aa-9088-9c4023cbce68"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "b6ef7793-ebbd-4a06-af68-32e9c3794a1b",
+      "name": "RAG Agent",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "position": [
+        2016,
+        336
+      ],
+      "webhookId": "8139c84a-40fd-4fd1-a79d-65f5cfdc9c65",
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "content": " Для удобства можно заменить на Webhook вместо работы с Google drive",
+        "height": 192,
+        "width": 336
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2656,
+        160
+      ],
+      "typeVersion": 1,
+      "id": "449ed5e5-5a65-488b-ac77-33d4315b5a85",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "При обновлении данных создаётся новая коллекция (название берется от названия входного файла)",
+        "height": 288,
+        "width": 256
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3184,
+        208
+      ],
+      "typeVersion": 1,
+      "id": "478687ff-d44b-4c41-90b5-c4cdc5a02551",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "qwen/qwen3-embedding-8b"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2496,
+        704
+      ],
+      "typeVersion": 1,
+      "id": "d0c3d64e-36b5-4ded-b7e9-9c666324a0c7",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "minimax/minimax-m2.5",
+        "height": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2000,
+        512
+      ],
+      "typeVersion": 1,
+      "id": "18ad5146-b991-4548-b77a-cb63565109ab",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Search Documents": {
+      "ai_tool": [
+        [
+          {
+            "node": "Answer Questions",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split into Chunks": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Load File Content & Metadata",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Conversation": {
+      "ai_memory": [
+        [
+          {
+            "node": "Answer Questions",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load File Content & Metadata": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert into Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert into Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Search Documents",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Insert into Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Answer Questions",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RAG Agent": {
+      "main": [
+        [
+          {
+            "node": "Answer Questions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e4bb6129-5c50-4935-af21-7a74b6708502",
+  "meta": {
+    "templateId": "11468",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f9ff25b970b33b6d035028b95543c189684a269c1e482459c720efd3e91899cc"
+  },
+  "id": "XHDxYoq1ntr9Mp3R",
+  "tags": []
+}
